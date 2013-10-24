@@ -9,7 +9,7 @@ def find_which_or_install(exists_cmd, not_found_command):
    while exists_cmd + " not found" == exists or exists == '':
 
       print "Attempting to run command: " + not_found_command
-      run(not_found_command)
+      run(not_found_command + " >> devenv.log")
       installed = True
       exists = run("which "+exists_cmd)
 
