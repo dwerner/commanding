@@ -1,127 +1,152 @@
 #!/usr/bin/env python
 import os
-import subprocess
-import pdb
-
-def find_which_or_install(exists_cmd, not_found_command):
-   exists = run("which "+exists_cmd)
-   installed = False
-   while exists_cmd + " not found" == exists or exists == '':
-
-      print "Attempting to run command: " + not_found_command
-      run(not_found_command + " >> devenv.log")
-      installed = True
-      exists = run("which "+exists_cmd)
-
-   if installed:
-      print "Installed : " + exists
-   else:
-      print "Found preinstalled: " + exists
-   #return result from last `which`
-   return exists
+from subprocess import Popen, PIPE
 
 
-def run(cmd_with_options):
-   result = os.popen(cmd_with_options)
-   return result.readline().rstrip()
+class Message(object):
+   def __init__(self, message):
+      self.message = message
 
-def wget(link):
-   subprocess.call("wget "+ link)
+   def run(self):
+      print self.message
 
-class InstallTarget():
 
+class Command(object):
+
+   def __init__(self, cmd):
+      self.command = cmd
+
+   def run(self):
+      Message(self.command).run()
+      self.process_options = {"shell":True, "stdout":PIPE, "stderr":PIPE}
+      self.process = Popen([self.command], **self.process_options)
+      self.stdout, self.stderr = self.process.communicate()
+      self.process.wait()
+      return self
+
+   def first(self):
+      return self.stdout.rstrip()
+
+   def matches(self, match):
+      return match in self.run().first()
+
+   def isnt(self, match):
+      return match in self.run().first()
+
+   def __str__(self):
+      return '"{}"'.format(self.command)
+
+
+class Where(Command):
+   def __init__(self, test):
+      super(Where, self).__init__("which {}".format(test))
+
+class Wget(Command):
+   def __init__(self, url):
+      self.command = "wget {}".format(url)
+
+class AptPPA(Command):
+   def __init__(self, ppa):
+      self.command = "sudo add-apt-repository -y {}".format(ppa)
+
+class Apt(Command):
+   def __init__(self, pkg):
+      self.command = "sudo apt-get install -y {}".format(pkg)
+
+class AptUpdate(Command):
    def __init__(self):
-      print "Examining the system..."
+      self.command = "sudo apt-get update"
 
-      #find uname -s
-      self.uname = run("uname -s")
-      self.homedir = run("echo $HOME")
+class Pip(Command):
+   def __init__(self, pkg):
+      self.command = "sudo pip install {}".format(pkg)
 
-      os.chdir(self.homedir)
-      if not os.path.exists("tmp"):
-         os.mkdir("tmp")
+class Unzip(Command):
+   def __init__(self, archive, dest):
+      self.command = "unzip {} {}".format(archive, dest)
 
-      #determine shell
-      self.shell = run("echo $SHELL")
+class Brew(Command):
+   def __init__(self, pkg):
+      self.command = "sudo brew install {}".format(pkg)
 
-      self.pip_cmd = "sudo pip install "
+class Task(object):
+   def __init__(self, *args):
+      self.tasks = args
 
+   def run(self):
+      print "Running task"
+      for task in self.tasks:
+         task.run()
 
-   def install(self):
-      print "Found " + self.uname
-      if "Darwin" in self.uname:
-         self.osx_specific()
+   def __str__(self):
+      return " -> ".join(["{}".format(s) for s in self.tasks])
 
-      elif "Linux" in self.uname:
-         self.linux_specific()
+class Do(object):
+   def __init__(self, condition, command):
+      self.condition = condition
+      self.command = command
 
+   def run(self):
+      if self.condition:
+         self.command.run()
       else:
-         pass #... other (windows?)
+         Message("Won't Do : {}".format(self.command)).run()
 
-      #platform agnostic packages
-      self.pkg_install("git")
-      self.pkg_install("wget")
-      self.pkg_install("curl")
-      self.express = find_which_or_install("express", "sudo npm install -g express")
-      #self.django = find_which_or_install("django-admin.py", self.pip_cmd + "django")
-
-      if "Darwin" in self.uname:
-         if not os.path.exists("/Applications/iTerm 2.app"):
-            wget("http://www.iterm2.com/downloads/stable/iTerm2_v1_0_0.zip")
-            subprocess.call("unzip iTerm2_v1_0_0.zip /Applications")
-
-      self.zsh = find_which_or_install("zsh", "curl -L https://github.com/robbyrussell/oh-my-zsh/raw/master/tools/install.sh | sh")
-
-      if not os.path.exists("dotfiles"):
-         print "Checking out 'dotfiles'"
-         run("git clone https://github.com/olivier-o/dotfiles")
-         run("sh dotfiles/makesymlinks.sh")
-
-      print "Complete."
-
-
-   def osx_specific(self):
-      print "Installing OSX Specific packages..."
-
-      #todo: detect Xcode command line tools
-      self.brew = find_which_or_install("brew", 'ruby -e "$(curl -fsSL https://raw.github.com/mxcl/homebrew/go)"')
-      self.install_cmd = "sudo brew install "
-
-      self.pip = find_which_or_install("pip", "sudo easy_install pip")
-      self.pkg_install("node")
-
-
-   def linux_specific(self):
-      print "Installing Linux Specific packages..."
-
-      self.install_cmd = "sudo apt-get install -y "
-      apt_ppa_cmd = "sudo add-apt-repository -y "
-
-      def add_ppa(ppa):
-         print "Adding PPA: " + ppa
-         run(apt_ppa_cmd + ppa)
-
-      find_which_or_install("pip", self.install_cmd+ "python-pip")
-
-      #PPAs
-      add_ppa("ppa:chris-lea/node.js") #nodejs
-      run("sudo apt-get update")
-
-      find_which_or_install("node", self.install_cmd+ "nodejs")
-
-   def pkg_install(self, pkg):
-      """
-      Install a package using the system package manager (homebrew, apt-get)
-      """
-      find_which_or_install(pkg, self.install_cmd + pkg)
-
-
-   def pip_install(self, module):
-      """
-      Install a python module using pip
-      """
-      run(self.pip_cmd + module)
+   def __str__(self):
+      return "Conditional: {}".format(self.command)
 
 if __name__ == "__main__":
-   target = InstallTarget()
-   target.install()
+   t = Task(
+         Do(
+            Where("uname -s").matches("Darwin"),
+            Do(
+               not os.path.exists("/Applications/iTerm 2.app"),
+               Task(
+                  Wget("http://www.iterm2.com/downloads/stable/iTerm2_v1_0_0.zip"),
+                  Unzip("iTerm2_v1_0_0.zip", "./tmp")
+               )
+            )
+         ),
+         Do(
+            Where("brew").matches("not found"),
+            Command('ruby -e "$(curl -fsSL https://raw.github.com/mxcl/homebrew/go)"'),
+         ),
+         Do(
+            Where("pip").matches("not found"),
+            Task(
+               Do(
+                  Where("uname -s").matches("Darwin"),
+                  Task(
+                     ("pip")
+                  )
+               ),
+               Do(
+                  Where("uname -s").matches("Linux"),
+                  Apt("python-pip")
+               )
+            )
+         ),
+         Do(
+            Where("node").matches("not found"),
+            Task(
+               Do(
+                  Where("uname -s").matches("Darwin"),
+                  Brew("node")
+               ),
+               Do(
+                  Where("uname -s").matches("Linux"),
+                  Task(
+                     AptPPA("ppa:chris-lea/node.js"),
+                     AptUpdate(),
+                     Apt("nodejs")
+                  )
+               )
+            )
+         ),
+         Do(
+            Where("zsh").matches("not found"),
+            Command("curl -L https://github.com/robbyrussell/oh-my-zsh/raw/master/tools/install.sh | sh")
+         )
+      )
+   t.run()
+
