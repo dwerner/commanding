@@ -94,7 +94,7 @@ class InstallTarget():
    def linux_specific(self):
       print "Installing Linux Specific packages..."
 
-      self.install_cmd = "sudo apt-get install "
+      self.install_cmd = "sudo apt-get install -y "
       apt_ppa_cmd = "sudo add-apt-repository -y "
 
       def add_ppa(ppa):
