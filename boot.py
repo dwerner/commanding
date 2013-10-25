@@ -37,37 +37,46 @@ class Command(object):
       return '"{}"'.format(self.command)
 
 
+
 class Where(Command):
    def __init__(self, test):
       super(Where, self).__init__("which {}".format(test))
+
 
 class Wget(Command):
    def __init__(self, url):
       self.command = "wget {}".format(url)
 
+
 class AptPPA(Command):
    def __init__(self, ppa):
       self.command = "sudo add-apt-repository -y {}".format(ppa)
+
 
 class Apt(Command):
    def __init__(self, pkg):
       self.command = "sudo apt-get install -y {}".format(pkg)
 
+
 class AptUpdate(Command):
    def __init__(self):
       self.command = "sudo apt-get update"
+
 
 class Pip(Command):
    def __init__(self, pkg):
       self.command = "sudo pip install {}".format(pkg)
 
+
 class Unzip(Command):
    def __init__(self, archive, dest):
       self.command = "unzip {} {}".format(archive, dest)
 
+
 class Brew(Command):
    def __init__(self, pkg):
       self.command = "sudo brew install {}".format(pkg)
+
 
 class Task(object):
    def __init__(self, *args):
@@ -80,6 +89,7 @@ class Task(object):
 
    def __str__(self):
       return " -> ".join(["{}".format(s) for s in self.tasks])
+
 
 class Do(object):
    def __init__(self, condition, command):
@@ -95,7 +105,9 @@ class Do(object):
    def __str__(self):
       return "Conditional: {}".format(self.command)
 
+
 if __name__ == "__main__":
+
    t = Task(
          Do(
             Where("uname -s").matches("Darwin"),
