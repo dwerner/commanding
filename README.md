@@ -1,16 +1,5 @@
-devenv
+commanding
 ======
 
-I am aware of puppet, but that seems a bit too heavyweight for me. I also wanted some experience writing 'shell-like' scripts in python for cross-platform concerns.
+A simple, and easily extensible, internal python DSL for performing command line operations.
 
-Ruby is an excellent choice when building a near-perfect DSL, ~~but I don't want a DSL, really~~ . Ok I do. Refactored it to be one.
-
-I want a tool that, with the least effort at install time, will install all the tools that I have come to use on a daily basis, along with my custom configuration for them.
-
-For most things, it is trivial to add a new package, because the default is to use the package manager for the system:
-
-> OSX
-> > homebrew
-
-> Linux
-> > apt
