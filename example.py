@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 import os
-from .. import commanding
-from commanding import commands
-from commands import *
+from commanding.commands import *
 
 if __name__ == "__main__":
 
