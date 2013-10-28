@@ -9,26 +9,28 @@ if __name__ == "__main__":
    isLinux = sysName.matches("Linux")
    pipFound = not Exists('pip').matches("not found")
 
-   t = Task(
+When(
+         not pipFound and isLinux,
+      ).do(
+         Apt("python-pip")
+      ).else
+
+   When(isMac).do(
 
       When(
-         isMac and not os.path.exists("/Applications/iTerm 2.app"),
+         not os.path.exists("/Applications/iTerm 2.app"),
       ).do(
          Wget("http://www.iterm2.com/downloads/stable/iTerm2_v1_0_0.zip"),
          Unzip("iTerm2_v1_0_0.zip", "./tmp")
       ),
 
       When(
-         isMac and Exists("brew").matches("not found"),
+         Exists("brew").matches("not found"),
       ).do(
          Run('ruby -e "$(curl -fsSL https://raw.github.com/mxcl/homebrew/go)"')
       ),
 
       When(
-         not pipFound and isLinux,
-      ).do(
-         Apt("python-pip")
-      ).elseWhen(
          not pipFound and isMac,
       ).do(
          Brew('pip')
@@ -41,14 +43,7 @@ if __name__ == "__main__":
                isMac,
             ).do(
                Brew("node")
-            ).elseWhen(
-               isLinux,
-            ).do(
-               AptPPA("ppa:chris-lea/node.js"),
-               AptUpdate(),
-               Apt("nodejs")
-         )
-      ),
+            )      ),
 
       When(
          Exists("zsh").matches("not found"),
