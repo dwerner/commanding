@@ -12,15 +12,16 @@ class Message(object):
 class Run(object):
 
    hasRun = False
-   verbose = False
 
-   def __init__(self, cmd, verbose=False):
+   def __init__(self, cmd, verbose=True):
       self.command = cmd
       self.verbose = verbose
 
    def run(self):
       if self.hasRun:
          raise Exception("Run has already run! {}".format(self))
+      else:
+         self.hasRun = True
 
       self.process_options = {"shell":True, "stdout":PIPE, "stderr":PIPE}
       self.process = Popen([self.command], **self.process_options)
@@ -29,9 +30,8 @@ class Run(object):
 
       if self.verbose:
          Message(self.command).run()
-         Message("Value: {}".format(self.value()))
+         Message(self.stdout).run()
 
-      self.hasRun = True
       return self
 
    def value(self):
