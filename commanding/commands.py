@@ -79,6 +79,9 @@ class Pip(Run):
    def __init__(self, pkg):
       self.command = "sudo pip install {}".format(pkg)
 
+class GitHub(Run):
+   def __init__(self, repo):
+      self.command = "git clone https://github.com/{}".format(repo)
 
 class Unzip(Run):
    def __init__(self, archive, dest):

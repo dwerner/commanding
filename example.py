@@ -5,10 +5,8 @@ from commanding.commands import *
 if __name__ == "__main__":
 
    sysName = Run('uname -s')
-
    pipFound = not Exists('pip').matches("not found")
-
-
+   gitFound = not Exists('git').matches("not found")
 
     #mac
    When(sysName.matches("Darwin")).do(
@@ -37,9 +35,9 @@ if __name__ == "__main__":
       ),
 
       When(
-         Exists("zsh").matches("not found")
+        not gitFound
       ).do(
-         Run("curl -L https://github.com/robbyrussell/oh-my-zsh/raw/master/tools/install.sh | sh")
+        Brew('git')
       )
 
    ).elseWhen(sysName.matches("Linux")).do(
@@ -49,6 +47,8 @@ if __name__ == "__main__":
       ).do(
          Apt("python-pip")
       )
+
+      When( not gitFound ).do( Apt("git") )
 
    ).run()
 
